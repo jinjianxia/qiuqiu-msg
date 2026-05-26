@@ -1,0 +1,24 @@
+name: 球球消息
+on:
+  schedule:
+    - cron: "*/10 * * * *"  # 每10分钟检查一次
+  workflow_dispatch:  # 允许手动运行
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run
+        env:
+          RSS_URL: ${{ secrets.RSS_URL }}
+          DING_WEBHOOK: ${{ secrets.DING_WEBHOOK }}
+        run: python qiuqiumsg.py
