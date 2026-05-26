@@ -19,6 +19,6 @@ jobs:
 
       - name: Run
         env:
-          RSS_URL: ${{ secrets.RSS_URL }}
+          XUEQIU_USER_ID: ${{ secrets.XUEQIU_USER_ID }}
           DING_WEBHOOK: ${{ secrets.DING_WEBHOOK }}
         run: python qiuqiumsg.py
