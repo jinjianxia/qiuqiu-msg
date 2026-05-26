@@ -3,20 +3,18 @@ import re
 import requests
 import json
 
-# ===================== 【敏感配置 - 从环境变量读取】 =====================
+# ========== 配置（保持不变） ==========
 XUEQIU_USER_ID = os.getenv("XUEQIU_USER_ID")
 DING_WEBHOOK = os.getenv("DING_WEBHOOK")
-
-# 去重记录
 SENT_FILE = "/tmp/sent_posts.txt"
 
-# 请求头保持原版（不改！保证能正常抓取）
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
     "Referer": "https://xueqiu.com/",
+    "Accept": "application/json, text/plain, */*",
 }
 
-# ===================== 去重功能 =====================
+# ========== 去重 ==========
 def load_sent_ids():
     try:
         with open(SENT_FILE, "r", encoding="utf-8") as f:
@@ -31,56 +29,69 @@ def save_sent_id(sid):
     except:
         pass
 
-# ===================== 发送到钉钉 =====================
+# ========== 发钉钉 ==========
 def send_to_ding(content, link):
     message = {
         "msgtype": "markdown",
         "markdown": {
-            "title": "雪球动态更新",  # 这里隐藏
-            "text": f"**🔔 雪球博主新动态**\n\n{content}\n\n[查看原文]({link})"
+            "title": "qiuqiu动态更新",
+            "text": f"**🔔 qiuqiu博主新动态**\n\n{content}\n\n[查看原文]({link})"
         }
     }
     try:
-        requests.post(DING_WEBHOOK, json=message, timeout=10)
-    except:
-        pass
+        print("🔧 正在发送钉钉...")
+        r = requests.post(DING_WEBHOOK, json=message, timeout=10)
+        print("钉钉响应码：", r.status_code)
+        print("钉钉响应内容：", r.text)
+    except Exception as e:
+        print("❌ 发送异常：", repr(e))
 
-# ===================== 核心抓取（代码完全不变） =====================
+# ========== 最新API抓取（核心修改） ==========
 def fetch_posts():
-    url = f"https://xueqiu.com/u/{XUEQIU_USER_ID}"
-    
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=15)
-        resp.raise_for_status()
-    except:
-        print("请求失败")
+    if not XUEQIU_USER_ID or not DING_WEBHOOK:
+        print("❌ 环境变量缺失")
         return
 
-    match = re.search(r'"statuses":(\[.*?\]),"user"', resp.text, re.S)
-    if not match:
-        print("未获取到内容")
+    # 2026 最新用户动态API
+    api_url = f"https://xueqiu.com/v4/statuses/user_timeline.json?user_id={XUEQIU_USER_ID}&page=1&count=20"
+    print("🔗 访问API：", api_url)
+
+    try:
+        resp = requests.get(api_url, headers=HEADERS, timeout=15)
+        print("API状态码：", resp.status_code)
+        if resp.status_code != 200:
+            print("API返回非200，前300字符：", resp.text[:300])
+            return
+    except Exception as e:
+        print("❌ 访问API失败：", repr(e))
         return
 
     try:
-        status_list = json.loads(match.group(1))
-    except:
-        print("解析失败")
+        data = resp.json()
+        status_list = data.get("statuses", [])
+        print("✅ 抓到动态数量：", len(status_list))
+    except Exception as e:
+        print("❌ JSON解析失败：", repr(e))
+        print("原始响应：", resp.text[:500])
         return
 
     sent = load_sent_ids()
+    print("📌 已发送过的数量：", len(sent))
 
     for status in status_list:
         sid = str(status.get("id", ""))
-        if not sid or sid in sent:
+        if not sid:
+            continue
+        if sid in sent:
+            print("跳过已发送：", sid)
             continue
 
-        content = status.get("text", "无内容")
+        content = status.get("text", "").strip()
         link = f"https://xueqiu.com/statuses/{sid}.html"
+        print("✨ 新动态：", sid, content[:50])
 
         send_to_ding(content, link)
         save_sent_id(sid)
-        print(f"已发送新动态：{sid}")
 
-# ===================== 启动 =====================
 if __name__ == "__main__":
     fetch_posts()
