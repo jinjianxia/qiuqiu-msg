@@ -20,5 +20,8 @@ jobs:
       - name: Run
         env:
           XUEQIU_USER_ID: ${{ secrets.XUEQIU_USER_ID }}
-          DING_WEBHOOK: ${{ secrets.DING_WEBHOOK }}
+          CHECK_INTERVAL_SEC: ${{ secrets.CHECK_INTERVAL_SEC }}
+          MAIL_SENDER: ${{ secrets.MAIL_SENDER }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_RECEIVER: ${{ secrets.MAIL_RECEIVER }}
         run: python qiuqiumsg.py
