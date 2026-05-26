@@ -7,7 +7,7 @@ from email.header import Header
 
 # --- 配置（通过环境变量传入） ---
 USER_ID = os.environ.get("XUEQIU_USER_ID", "")
-CHECK_INTERVAL_SEC = int(os.environ.get("CHECK_INTERVAL_SEC", "600"))
+CHECK_INTERVAL_SEC = int(os.environ.get("CHECK_INTERVAL_SEC") or "600")
 SENDER = os.environ.get("MAIL_SENDER", "")
 PASSWORD = os.environ.get("MAIL_PASSWORD", "")
 RECEIVER = os.environ.get("MAIL_RECEIVER", MAIL_SENDER)
