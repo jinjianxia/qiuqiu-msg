@@ -10,7 +10,7 @@ USER_ID = os.environ.get("XUEQIU_USER_ID", "")
 CHECK_INTERVAL_SEC = int(os.environ.get("CHECK_INTERVAL_SEC") or "600")
 SENDER = os.environ.get("MAIL_SENDER", "")
 PASSWORD = os.environ.get("MAIL_PASSWORD", "")
-RECEIVER = os.environ.get("MAIL_RECEIVER", MAIL_SENDER)
+RECEIVER = os.environ.get("MAIL_RECEIVER", SENDER)
 
 if not all([USER_ID, SENDER, PASSWORD, RECEIVER]):
     print("[错误] 请设置环境变量: XUEQIU_USER_ID, MAIL_SENDER, MAIL_PASSWORD, MAIL_RECEIVER")
